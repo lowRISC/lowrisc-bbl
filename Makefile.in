@@ -36,6 +36,7 @@ project_name := @PACKAGE_TARNAME@
 src_dir      := @srcdir@
 scripts_dir  := $(src_dir)/scripts
 bbl_payload  := @BBL_PAYLOAD@
+lowrisc_dir  := @LOWRISC_DIR@
 
 # If the version information is not in the configure script, then we
 # assume that we are in a working directory. We use the vcs-version.sh
@@ -84,7 +85,8 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 #  - CXXFLAGS : flags for C++ compiler (eg. -Wall,-g,-O3)
 
 CC            := @CC@
-CFLAGS        := @CFLAGS@ $(CFLAGS) -DBBL_PAYLOAD=\"$(bbl_payload)\"
+CFLAGS        := @CFLAGS@ $(CFLAGS) -DBBL_PAYLOAD=\"$(bbl_payload)\" \
+				 -I$(lowrisc_dir)/generated-src
 COMPILE       := $(CC) -MMD -MP $(CFLAGS) \
                  $(sprojs_include)
 # Linker

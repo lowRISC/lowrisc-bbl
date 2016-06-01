@@ -1,14 +1,15 @@
 #include "mtrap.h"
 #include "mcall.h"
-#include "htif.h"
 #include "atomic.h"
 #include "bits.h"
+#include "uart.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-volatile uint64_t tohost __attribute__((aligned(64)));
-volatile uint64_t fromhost __attribute__((aligned(64)));
+#ifdef DEV_MAP__io_ext_host__BASE
+volatile uint64_t *tohost = (uint64_t *)DEV_MAP__io_ext_host__BASE;
+#endif
 
 void __attribute__((noreturn)) bad_trap()
 {
@@ -20,41 +21,16 @@ static uintptr_t mcall_hart_id()
   return read_const_csr(mhartid);
 }
 
-static void request_htif_keyboard_interrupt()
+static void request_console_interrupt()
 {
-  assert(tohost == 0);
-  tohost = TOHOST_CMD(1, 0, 0);
+  uart_enable_read_irq();
 }
 
-static void htif_interrupt()
+static void console_interrupt()
 {
-  // we should only be interrupted by keypresses
-  uint64_t fh = fromhost;
-  if (!fh)
-    return;
-  if (!(FROMHOST_DEV(fh) == 1 && FROMHOST_CMD(fh) == 0))
-    die("unexpected htif interrupt");
-  HLS()->console_ibuf = 1 + (uint8_t)FROMHOST_DATA(fh);
-  fromhost = 0;
+  if(uart_check_read_irq())
+    HLS()->console_ibuf = 1 + uart_recv();
   set_csr(mip, MIP_SSIP);
-}
-
-static void do_tohost_fromhost(uintptr_t dev, uintptr_t cmd, uintptr_t data)
-{
-  while (tohost)
-    htif_interrupt();
-  tohost = TOHOST_CMD(dev, cmd, data);
-
-  while (1) {
-    uint64_t fh = fromhost;
-    if (fh) {
-      if (FROMHOST_DEV(fh) == dev && FROMHOST_CMD(fh) == cmd) {
-        fromhost = 0;
-        break;
-      }
-      htif_interrupt();
-    }
-  }
 }
 
 uintptr_t timer_interrupt()
@@ -63,28 +39,33 @@ uintptr_t timer_interrupt()
   clear_csr(mie, MIP_MTIP);
   set_csr(mip, MIP_STIP);
 
-  // and poll the HTIF console
-  htif_interrupt();
+  // and poll the console
+  console_interrupt();
 
   return 0;
 }
 
+// WS need change
 static uintptr_t mcall_console_putchar(uint8_t ch)
 {
-  do_tohost_fromhost(1, 1, ch);
+  uart_send(ch); // send a char to term
   return 0;
 }
 
 static uintptr_t mcall_htif_syscall(uintptr_t magic_mem)
 {
-  do_tohost_fromhost(0, 0, magic_mem);
+  //do_tohost_fromhost(0, 0, magic_mem); //fesvr syscall
   return 0;
 }
 
+// WS need change
 void poweroff()
 {
-  while (1)
-    tohost = 1;
+  while (1) {
+#ifdef DEV_MAP__io_ext_host__BASE
+    *tohost = 1;
+#endif
+  }
 }
 
 void putstring(const char* s)
@@ -135,7 +116,7 @@ static uintptr_t mcall_console_getchar()
 {
   int ch = atomic_swap(&HLS()->console_ibuf, -1);
   if (ch >= 0)
-    request_htif_keyboard_interrupt();
+    request_console_interrupt();
   reset_ssip();
   return ch - 1;
 }

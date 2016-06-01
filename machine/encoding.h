@@ -3,6 +3,8 @@
 #ifndef RISCV_CSR_ENCODING_H
 #define RISCV_CSR_ENCODING_H
 
+#include "dev_map.h"
+
 #define MSTATUS_UIE         0x00000001
 #define MSTATUS_SIE         0x00000002
 #define MSTATUS_HIE         0x00000004
@@ -67,12 +69,8 @@
 #define IRQ_COP      12
 #define IRQ_HOST     13
 
-#define DEFAULT_RSTVEC     0x00001000
-#define DEFAULT_NMIVEC     0x00001004
-#define DEFAULT_MTVEC      0x00001010
-#define CONFIG_STRING_ADDR 0x0000100C
-#define EXT_IO_BASE        0x40000000
-#define DRAM_BASE          0x80000000
+#define CONFIG_STRING_ADDR (DEV_MAP__io_int_bootrom__BASE + 0x0000000C)
+#define DRAM_BASE          DEV_MAP__mem__BASE
 
 // page table entry (PTE) fields
 #define PTE_V     0x001 // Valid

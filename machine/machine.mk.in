@@ -1,5 +1,6 @@
 machine_subproject_deps = \
   softfloat \
+  driver \
 
 machine_hdrs = \
   atomic.h \
@@ -8,7 +9,6 @@ machine_hdrs = \
   emulation.h \
   encoding.h \
   fp_emulation.h \
-  htif.h \
   mcall.h \
   mtrap.h \
   sbi.h \

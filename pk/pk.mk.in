@@ -1,6 +1,7 @@
 pk_subproject_deps = \
 	util \
 	softfloat \
+    driver \
 	machine \
 
 pk_hdrs = \
