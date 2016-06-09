@@ -10,7 +10,7 @@ SECTIONS
   /*--------------------------------------------------------------------*/
 
   /* Begining of code and text segment */
-  . = 0x80000000;
+  . = 0x40000000;
   _ftext = .;
   PROVIDE( eprol = . );
 

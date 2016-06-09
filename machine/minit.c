@@ -2,6 +2,7 @@
 #include "atomic.h"
 #include "vm.h"
 #include "fp_emulation.h"
+#include "uart.h"
 #include <string.h>
 
 pte_t* root_page_table;
@@ -95,6 +96,7 @@ void init_first_hart()
   hls_init(0); // this might get called again from parse_config_string
   parse_config_string();
   memory_init();
+  uart_init();
   boot_loader();
 }
 
