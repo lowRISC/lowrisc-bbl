@@ -1,6 +1,7 @@
 #include "configstring.h"
 #include "encoding.h"
 #include "mtrap.h"
+//#include "uart.h"
 #include <stdio.h>
 
 static void query_mem(const char* config_string)
@@ -22,6 +23,7 @@ static void query_rtc(const char* config_string)
 
 static void query_harts(const char* config_string)
 {
+  num_harts = 0;
   for (int core = 0, hart; ; core++) {
     for (hart = 0; ; hart++) {
       char buf[32];
@@ -50,6 +52,7 @@ void parse_config_string()
 {
   uint32_t addr = *(uint32_t*)CONFIG_STRING_ADDR;
   const char* s = (const char*)(uintptr_t)addr;
+  //uart_send_string(s);
   query_mem(s);
   query_rtc(s);
   query_harts(s);

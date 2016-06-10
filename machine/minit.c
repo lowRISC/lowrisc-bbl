@@ -94,6 +94,7 @@ void init_first_hart()
 {
   hart_init();
   hls_init(0); // this might get called again from parse_config_string
+  //uart_init(); // init early if need to debug config string
   parse_config_string();
   memory_init();
   uart_init();
