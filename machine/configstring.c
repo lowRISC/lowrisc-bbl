@@ -23,7 +23,6 @@ static void query_rtc(const char* config_string)
 
 static void query_harts(const char* config_string)
 {
-  num_harts = 0;
   for (int core = 0, hart; ; core++) {
     for (hart = 0; ; hart++) {
       char buf[32];
