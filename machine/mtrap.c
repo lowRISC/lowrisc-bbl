@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef DEV_MAP__io_ext_host__BASE
 volatile uint64_t *tohost = (uint64_t *)DEV_MAP__io_ext_host__BASE;
@@ -193,6 +194,18 @@ static uintptr_t mcall_remote_fence_i(uintptr_t* hart_mask)
   return 0;
 }
 
+static uintptr_t mcall_config_string_base(void)
+{
+  /* Potentially prune hidden devices here */
+  return *(uint32_t*)CONFIG_STRING_ADDR;
+}
+
+static uintptr_t mcall_config_string_size(void)
+{
+  const char* s = (const char*)mcall_config_string_base();
+  return strlen(s)+1;
+}
+
 void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
 {
   uintptr_t n = regs[17], arg0 = regs[10], arg1 = regs[11], retval;
@@ -231,6 +244,12 @@ void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
       break;
     case MCALL_REMOTE_FENCE_I:
       retval = mcall_remote_fence_i((uintptr_t*)arg0);
+      break;
+    case MCALL_CONFIG_STRING_BASE:
+      retval = mcall_config_string_base();
+      break;
+    case MCALL_CONFIG_STRING_SIZE:
+      retval = mcall_config_string_size();
       break;
     default:
       retval = -ENOSYS;
