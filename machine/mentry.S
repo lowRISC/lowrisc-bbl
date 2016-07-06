@@ -22,7 +22,9 @@ trap_table:
   .word software_interrupt
 #define TIMER_INTERRUPT_VECTOR 13
   .word timer_interrupt
-#define TRAP_FROM_MACHINE_MODE_VECTOR 14
+#define CONSOLE_INTERRUPT_VECTOR 14
+  .word console_interrupt
+#define TRAP_FROM_MACHINE_MODE_VECTOR 15
   .word __trap_from_machine_mode
 
   .option norvc
@@ -52,6 +54,11 @@ trap_vector:
   li a0, IRQ_M_TIMER * 2
   bne a0, a1, 1f
   li a1, TIMER_INTERRUPT_VECTOR
+  j .Lhandle_trap_in_machine_mode
+1:
+  li a0, IRQ_HOST * 2
+  bne a0, a1, 1f
+  li a1, CONSOLE_INTERRUPT_VECTOR
   j .Lhandle_trap_in_machine_mode
 
 .Lmret:

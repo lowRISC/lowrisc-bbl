@@ -26,7 +26,7 @@ static void request_console_interrupt()
   uart_enable_read_irq();
 }
 
-static void console_interrupt()
+void console_interrupt()
 {
   if(uart_check_read_irq())
     HLS()->console_ibuf = 1 + uart_recv();
