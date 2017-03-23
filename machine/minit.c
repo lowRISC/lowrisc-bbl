@@ -7,6 +7,7 @@
 
 pte_t* root_page_table;
 uintptr_t first_free_paddr;
+uintptr_t mem_base;
 uintptr_t mem_size;
 uintptr_t num_harts;
 volatile uint64_t* mtime;

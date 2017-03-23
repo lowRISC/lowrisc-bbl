@@ -8,8 +8,7 @@ static void query_mem(const char* config_string)
 {
   query_result res = query_config_string(config_string, "ram{0{addr");
   assert(res.start);
-  uintptr_t base = get_uint(res);
-  assert(base == DRAM_BASE);
+  mem_base = get_uint(res);
   res = query_config_string(config_string, "ram{0{size");
   mem_size = get_uint(res);
 }

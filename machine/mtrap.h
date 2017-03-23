@@ -29,6 +29,7 @@ static inline int xlen()
 }
 
 extern uintptr_t first_free_paddr;
+extern uintptr_t mem_base;
 extern uintptr_t mem_size;
 extern uintptr_t num_harts;
 extern volatile uint64_t* mtime;
