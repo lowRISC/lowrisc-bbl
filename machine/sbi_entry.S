@@ -108,6 +108,18 @@ sbi_base:
   ecall
   ret
 
+  # eth_read
+  .align 4
+  li a7, MCALL_ETH_READ
+  ecall
+  ret
+
+  # eth_write
+  .align 4
+  li a7, MCALL_ETH_WRITE
+  ecall
+  ret
+
   # end of SBI trampolines
 
   .globl do_mcall

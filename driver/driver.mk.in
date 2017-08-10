@@ -1,7 +1,11 @@
 driver_subproject_deps = \
 
 driver_hdrs = \
+  mini.h \
   uart.h \
+  eth.h \
 
 driver_c_srcs = \
+  mini.c \
   uart.c \
+  eth.c \

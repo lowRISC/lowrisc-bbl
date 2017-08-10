@@ -29,4 +29,7 @@ unsigned long sbi_unmask_interrupt(unsigned long which);
 unsigned long sbi_config_string_base(void); // physical address
 unsigned long sbi_config_string_size(void); // includes null terminator
 
+int sbi_eth_read(long unsigned int paddr);
+int sbi_eth_write(long unsigned int paddr, int data);
+
 #endif

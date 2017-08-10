@@ -71,7 +71,7 @@ AC_HEADER_STDC
 # Default compiler flags
 #-------------------------------------------------------------------------
 
-AC_SUBST([CFLAGS],  ["-Wall -Werror -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -fno-delete-null-pointer-checks"])
+AC_SUBST([CFLAGS],  ["-Wall -Werror -Wno-strict-aliasing -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -fno-delete-null-pointer-checks"])
 AC_SUBST([LIBS],  ["-lgcc"])
 
 #-------------------------------------------------------------------------
@@ -81,7 +81,7 @@ AC_SUBST([LIBS],  ["-lgcc"])
 # The '*' suffix indicates an optional subproject. The '**' suffix
 # indicates an optional subproject which is also the name of a group.
 
-MCPPBS_SUBPROJECTS([ pk, bbl, softfloat, dummy_payload, machine, util, driver ])
+MCPPBS_SUBPROJECTS([ pk, bbl, softfloat, dummy_payload, machine, util, driver, contiki ])
 
 #-------------------------------------------------------------------------
 # MCPPBS subproject groups

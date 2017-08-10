@@ -1,0 +1,36 @@
+contiki_subproject_deps = \
+
+contiki_hdrs = \
+checksum.h \
+contiki-conf.h \
+contiki-default-conf.h \
+contiki.h \
+contiki-lib.h \
+contiki-net.h \
+contiki-version.h \
+encoding.h \
+eth.h \
+ftpc.h \
+ftp-dsc.h \
+ftp.h \
+header.h \
+http-strings.h \
+http-user-agent-string.h \
+lowriscdef.h \
+mtarch.h \
+rtimer-arch.h \
+webclient.h \
+
+contiki_c_srcs = \
+clock.c \
+etimer.c \
+process.c \
+mtarch.c \
+mt.c \
+tcpip.c \
+timer.c \
+uip_arp.c \
+uip.c \
+uip-split.c \
+uip-udp-packet.c \
+

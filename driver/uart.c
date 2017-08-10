@@ -28,6 +28,11 @@ void uart_send(uint8_t data) {
   *(uart_base_ptr + UART_THR) = data;
 }
 
+// Access UART from interrupt context (assumes transmit empty)
+void uart_send_irq(uint8_t data) {
+  *(uart_base_ptr + UART_THR) = data;
+}
+
 void uart_send_string(const char *str) {
   while(*str != 0) {
     while(! (*(uart_base_ptr + UART_LSR) & 0x40u));

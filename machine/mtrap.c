@@ -3,6 +3,7 @@
 #include "atomic.h"
 #include "bits.h"
 #include "uart.h"
+#include "eth.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -27,8 +28,12 @@ static void request_console_interrupt()
   uart_enable_read_irq();
 }
 
-void console_interrupt()
+void external_interrupt()
 {
+  uart_send_irq('#');
+  // Check ethernet ready
+  eth_check_read_irq();
+  // Check console ready
   if(uart_check_read_irq())
     HLS()->console_ibuf = 1 + uart_recv();
   set_csr(mip, MIP_SSIP);
@@ -41,7 +46,7 @@ uintptr_t timer_interrupt()
   set_csr(mip, MIP_STIP);
 
   // and poll the console
-  console_interrupt();
+  external_interrupt();
 
   return 0;
 }
@@ -67,6 +72,29 @@ void poweroff()
     *tohost = 1;
 #endif
   }
+}
+
+static volatile unsigned int * const eth_base = (volatile unsigned int*)ETH_BASE;
+
+static int eth_read(size_t paddr)
+{
+  uint32_t ret = eth_base[paddr >> 2];
+#ifdef VERBOSE
+  printm("eth_read(%x); returned %x\n", paddr, ret);
+#endif  
+  return ret;
+}
+
+static int eth_write(size_t paddr, int data)
+{
+#ifdef VERBOSE
+  printm("eth_write(%x,%x);\n", paddr, data);
+#endif  
+  eth_base[paddr >> 2] = data;
+#ifdef VERBOSE
+  printm("eth_write completed\n");
+#endif  
+  return 0;
 }
 
 void putstring(const char* s)
@@ -158,6 +186,11 @@ void software_interrupt()
 
   if (ipi_pending & IPI_SFENCE_VM)
     asm volatile ("sfence.vm");
+
+#if 1
+  printm("software_interrupt %X\n", ipi_pending);
+#endif  
+  
 }
 
 static void send_ipi_many(uintptr_t* pmask, int event)
@@ -250,6 +283,12 @@ void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
       break;
     case MCALL_CONFIG_STRING_SIZE:
       retval = mcall_config_string_size();
+      break;
+    case MCALL_ETH_READ:
+      retval = eth_read(arg0);
+      break;
+    case MCALL_ETH_WRITE:
+      retval = eth_write(arg0, arg1);
       break;
     default:
       retval = -ENOSYS;

@@ -15,3 +15,5 @@
 .globl sbi_remote_fence_i; sbi_remote_fence_i = -1808
 .globl sbi_config_string_base; sbi_config_string_base = -1792
 .globl sbi_config_string_size; sbi_config_string_size = -1776
+.globl sbi_eth_read; sbi_eth_read = -1760
+.globl sbi_eth_write;sbi_eth_write = -1744
