@@ -32,7 +32,7 @@ static void mstatus_init()
 // send S-mode interrupts and most exceptions straight to S-mode
 static void delegate_traps()
 {
-  uintptr_t interrupts = MIP_SSIP | MIP_STIP;
+  uintptr_t interrupts = MIP_SSIP | MIP_STIP | (1 << IRQ_S_DEV);
   uintptr_t exceptions =
     (1U << CAUSE_MISALIGNED_FETCH) |
     (1U << CAUSE_FAULT_FETCH) |
