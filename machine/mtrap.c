@@ -38,17 +38,16 @@ static uintptr_t mcall_console_putchar(uint8_t data)
 
 void external_interrupt()
 {
-#if 1
-  enum {UART_IER=0x1u, MACHI_OFFSET=0x0804, MACHI_IRQ_EN=0x00400000};
-  volatile uint32_t *uart_base_ptr = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
+  enum {UART_IER=0x4u,
+	MACHI_OFFSET=0x0804,
+	MACHI_IRQ_EN=0x00400000,
+	SPI_GIE=0x1C};
+  volatile uint32_t *uart_base = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
   volatile uint32_t *eth_base = (uint32_t *)(DEV_MAP__io_ext_eth__BASE);
- *(uart_base_ptr + UART_IER) = 0x0000u;
+  volatile uint32_t *spi_base = (uint32_t *)(DEV_MAP__io_ext_spi__BASE);
+  uart_base[UART_IER>>2] = 0x0000u;
   eth_base[MACHI_OFFSET>>2] &= ~MACHI_IRQ_EN;
-#endif  
-  clear_csr(mie, (1 << IRQ_M_DEV));
-#if 0
-  mb();
-#endif  
+  spi_base[SPI_GIE>>2] &= ~0x80000000;
   set_csr(mip, MIP_SSIP);
 }
 
@@ -57,9 +56,6 @@ uintptr_t timer_interrupt()
   // just send the timer interrupt to the supervisor
   clear_csr(mie, MIP_MTIP);
   set_csr(mip, MIP_STIP);
-
-  // and poll the console which also triggers the other interrupt handlers (this could be a bad idea ?)
-  // external_interrupt();
 
   return 0;
 }
