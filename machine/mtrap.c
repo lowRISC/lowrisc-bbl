@@ -2,7 +2,7 @@
 #include "mcall.h"
 #include "atomic.h"
 #include "bits.h"
-#include "uart.h"
+#include "dev_map.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,7 +14,7 @@ volatile uint64_t *tohost = (uint64_t *)DEV_MAP__io_ext_host__BASE;
 
 void __attribute__((noreturn)) bad_trap()
 {
-  die("machine mode: unhandlable trap %d @ %p", read_csr(mcause), read_csr(mepc));
+  die("machine mode: unhandleable trap %d @ %p", read_csr(mcause), read_csr(mepc));
 }
 
 static uintptr_t mcall_hart_id()
@@ -22,15 +22,33 @@ static uintptr_t mcall_hart_id()
   return read_const_csr(mhartid);
 }
 
-static void request_console_interrupt()
+static uintptr_t mcall_console_putchar(uint8_t data)
 {
-  uart_enable_read_irq();
+  enum {UART_THR=0x0u,UART_LSR=0x5u};
+  volatile uint32_t *uart_base_ptr = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
+  // wait until THR empty
+  while(! (*(uart_base_ptr + UART_LSR) & 0x40u));
+  *(uart_base_ptr + UART_THR) = data;
+  return 0;
 }
 
-void console_interrupt()
+/* This code exits and returns to the background before the supervisor user interrupt
+   is triggered. So it will loop endlessly if interrupts are still enabled. DUH */
+
+void external_interrupt()
 {
-  if(uart_check_read_irq())
-    HLS()->console_ibuf = 1 + uart_recv();
+  enum {UART_IER=0x4u,
+	MACHI_OFFSET=0x0804,
+	MACHI_IRQ_EN=0x00400000,
+	SPI_GIE=0x1C};
+  volatile uint32_t *uart_base = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
+  volatile uint32_t *eth_base = (uint32_t *)(DEV_MAP__io_ext_eth__BASE);
+#ifdef DEV_MAP__io_ext_spi__BASE
+  volatile uint32_t *spi_base = (uint32_t *)(DEV_MAP__io_ext_spi__BASE);
+  spi_base[SPI_GIE>>2] &= ~0x80000000;
+#endif
+  uart_base[UART_IER>>2] = 0x0000u;
+  eth_base[MACHI_OFFSET>>2] &= ~MACHI_IRQ_EN;
   set_csr(mip, MIP_SSIP);
 }
 
@@ -41,15 +59,6 @@ uintptr_t timer_interrupt()
   set_csr(mip, MIP_STIP);
 
   // and poll the console
-  console_interrupt();
-
-  return 0;
-}
-
-// WS need change
-static uintptr_t mcall_console_putchar(uint8_t ch)
-{
-  uart_send(ch); // send a char to term
   return 0;
 }
 
@@ -102,31 +111,6 @@ static uintptr_t mcall_send_ipi(uintptr_t recipient)
 
   send_ipi(recipient, IPI_SOFT);
   return 0;
-}
-
-static void reset_ssip()
-{
-  clear_csr(mip, MIP_SSIP);
-  mb();
-
-  if (HLS()->sipi_pending || HLS()->console_ibuf > 0)
-    set_csr(mip, MIP_SSIP);
-}
-
-static uintptr_t mcall_console_getchar()
-{
-  int ch = atomic_swap(&HLS()->console_ibuf, -1);
-  if (ch >= 0)
-    request_console_interrupt();
-  reset_ssip();
-  return ch - 1;
-}
-
-static uintptr_t mcall_clear_ipi()
-{
-  int ipi = atomic_swap(&HLS()->sipi_pending, 0);
-  reset_ssip();
-  return ipi;
 }
 
 static uintptr_t mcall_shutdown()
@@ -218,7 +202,7 @@ void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
       retval = mcall_console_putchar(arg0);
       break;
     case MCALL_CONSOLE_GETCHAR:
-      retval = mcall_console_getchar();
+      retval = ' ';
       break;
     case MCALL_HTIF_SYSCALL:
       retval = mcall_htif_syscall(arg0);
@@ -227,7 +211,7 @@ void mcall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
       retval = mcall_send_ipi(arg0);
       break;
     case MCALL_CLEAR_IPI:
-      retval = mcall_clear_ipi();
+      retval = (0);
       break;
     case MCALL_SHUTDOWN:
       retval = mcall_shutdown();
