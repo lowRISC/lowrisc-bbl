@@ -43,12 +43,14 @@ void external_interrupt()
 	SPI_GIE=0x1C};
   volatile uint32_t *uart_base = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
   volatile uint32_t *eth_base = (uint32_t *)(DEV_MAP__io_ext_eth__BASE);
+  volatile uint32_t *sd_base = (uint32_t *)(DEV_MAP__io_ext_hid__BASE + 0x10000);
 #ifdef DEV_MAP__io_ext_spi__BASE
   volatile uint32_t *spi_base = (uint32_t *)(DEV_MAP__io_ext_spi__BASE);
   spi_base[SPI_GIE>>2] &= ~0x80000000;
 #endif
   uart_base[UART_IER>>2] = 0x0000u;
   eth_base[MACHI_OFFSET>>2] &= ~MACHI_IRQ_EN;
+  sd_base[11] = 0;
   set_csr(mip, MIP_SSIP);
 }
 
