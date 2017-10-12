@@ -40,7 +40,8 @@ void external_interrupt()
   enum {UART_IER=0x4u,
 	MACHI_OFFSET=0x0804,
 	MACHI_IRQ_EN=0x00400000,
-	SPI_GIE=0x1C};
+	SPI_GIE=0x1C,
+        irq_en_reg=11};
   volatile uint32_t *uart_base = (uint32_t *)(DEV_MAP__io_ext_uart__BASE | 0x1000);
   volatile uint32_t *eth_base = (uint32_t *)(DEV_MAP__io_ext_eth__BASE);
   volatile uint32_t *sd_base = (uint32_t *)(DEV_MAP__io_ext_hid__BASE + 0x10000);
@@ -50,7 +51,7 @@ void external_interrupt()
 #endif
   uart_base[UART_IER>>2] = 0x0000u;
   eth_base[MACHI_OFFSET>>2] &= ~MACHI_IRQ_EN;
-  sd_base[11] = 0;
+  sd_base[irq_en_reg] = 0;
   set_csr(mip, MIP_SSIP);
 }
 
