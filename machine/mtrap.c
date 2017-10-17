@@ -22,6 +22,31 @@ static uintptr_t mcall_hart_id()
   return read_const_csr(mhartid);
 }
 
+static void minion_console_putchar(unsigned char ch)
+{
+#ifdef DEV_MAP__io_ext_hid__BASE
+  static int addr_int = 4096-256;
+  volatile uint32_t * const vid_base = (volatile uint32_t*)(DEV_MAP__io_ext_hid__BASE+0x8000);
+  switch(ch)
+    {
+    case 8: case 127: if (addr_int & 127) --addr_int; break;
+    case 13: addr_int = addr_int & -128; break;
+    case 10: addr_int = (addr_int|127)+1; break;
+    default: vid_base[addr_int++] = ch;
+    }
+  if (addr_int >= 4096-128)
+    {
+      // this is where we scroll
+      for (addr_int = 0; addr_int < 4096; addr_int++)
+        if (addr_int < 4096-128)
+          vid_base[addr_int] = vid_base[addr_int+128];
+        else
+          vid_base[addr_int] = ' ';
+      addr_int = 4096-256;
+    }
+#endif  
+}
+
 static uintptr_t mcall_console_putchar(uint8_t data)
 {
   enum {UART_THR=0x0u,UART_LSR=0x5u};
@@ -29,6 +54,7 @@ static uintptr_t mcall_console_putchar(uint8_t data)
   // wait until THR empty
   while(! (*(uart_base_ptr + UART_LSR) & 0x40u));
   *(uart_base_ptr + UART_THR) = data;
+  minion_console_putchar(data);
   return 0;
 }
 
