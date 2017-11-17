@@ -14,13 +14,6 @@ static void handle_illegal_instruction(trapframe_t* tf)
   else
     kassert(len == 2);
 
-  // supply 0 for unimplemented uarch counters
-  if ((tf->insn & (MASK_CSRRS | 0xcc0U<<20)) == (MATCH_CSRRS | 0xcc0U<<20)) {
-    tf->gpr[(tf->insn >> 7) & 0x1f] = 0;
-    tf->epc += 4;
-    return;
-  }
-
   dump_tf(tf);
   panic("An illegal instruction was executed!");
 }
@@ -90,13 +83,13 @@ void handle_trap(trapframe_t* tf)
 
   const static trap_handler trap_handlers[] = {
     [CAUSE_MISALIGNED_FETCH] = handle_misaligned_fetch,
-    [CAUSE_FAULT_FETCH] = handle_fault_fetch,
+    [CAUSE_FETCH_PAGE_FAULT] = handle_fault_fetch,
     [CAUSE_ILLEGAL_INSTRUCTION] = handle_illegal_instruction,
     [CAUSE_USER_ECALL] = handle_syscall,
     [CAUSE_BREAKPOINT] = handle_breakpoint,
     [CAUSE_MISALIGNED_STORE] = handle_misaligned_store,
-    [CAUSE_FAULT_LOAD] = handle_fault_load,
-    [CAUSE_FAULT_STORE] = handle_fault_store,
+    [CAUSE_LOAD_PAGE_FAULT] = handle_fault_load,
+    [CAUSE_STORE_PAGE_FAULT] = handle_fault_store,
   };
 
   kassert(tf->cause < ARRAY_SIZE(trap_handlers) && trap_handlers[tf->cause]);

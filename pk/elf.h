@@ -12,7 +12,7 @@
 #define IS_ELF32(hdr) (IS_ELF(hdr) && (hdr).e_ident[4] == 1)
 #define IS_ELF64(hdr) (IS_ELF(hdr) && (hdr).e_ident[4] == 2)
 
-#ifdef __riscv64
+#if __riscv_xlen == 64
 # define Elf_Ehdr Elf64_Ehdr
 # define Elf_Phdr Elf64_Phdr
 #else
@@ -22,6 +22,8 @@
 
 #define ET_EXEC 2
 #define ET_DYN 3
+
+#define EF_RISCV_RVC 1
 
 #define PT_LOAD 1
 
@@ -33,6 +35,10 @@
 #define AT_ENTRY  9
 #define AT_SECURE 23
 #define AT_RANDOM 25
+
+#define PF_X 1
+#define PF_W 2
+#define PF_R 4
 
 typedef struct {
   uint8_t  e_ident[16];

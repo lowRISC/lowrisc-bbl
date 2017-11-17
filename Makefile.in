@@ -430,6 +430,8 @@ junk += $(project_name)-*.tar.gz
 #-------------------------------------------------------------------------
 
 all : $(install_hdrs) $(install_libs) $(install_exes)
+	riscv64-unknown-elf-objdump -d bbl >bbl.dis
+
 .PHONY : all
 
 #-------------------------------------------------------------------------

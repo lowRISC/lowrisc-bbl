@@ -8,52 +8,16 @@
 
 elf_info current;
 
-#define NUM_COUNTERS 18
-static int uarch_counters_enabled;
-static long uarch_counters[NUM_COUNTERS];
-static char* uarch_counter_names[NUM_COUNTERS];
-
-static void read_uarch_counters(bool dump)
-{
-  if (!uarch_counters_enabled)
-    return;
-
-  size_t i = 0;
-  #define READ_CTR(name) do { \
-    while (i >= NUM_COUNTERS) ; \
-    long csr = read_csr(name); \
-    if (dump && csr) printk("%s = %ld\n", #name, csr - uarch_counters[i]); \
-    uarch_counters[i++] = csr; \
-  } while (0)
-  READ_CTR(0xcc0); READ_CTR(0xcc1); READ_CTR(0xcc2);
-  READ_CTR(0xcc3); READ_CTR(0xcc4); READ_CTR(0xcc5);
-  READ_CTR(0xcc6); READ_CTR(0xcc7); READ_CTR(0xcc8);
-  READ_CTR(0xcc9); READ_CTR(0xcca); READ_CTR(0xccb);
-  READ_CTR(0xccc); READ_CTR(0xccd); READ_CTR(0xcce);
-  READ_CTR(0xccf); READ_CTR(cycle); READ_CTR(instret);
-  #undef READ_CTR
-}
-
-static void start_uarch_counters()
-{
-  read_uarch_counters(false);
-}
-
-void dump_uarch_counters()
-{
-  read_uarch_counters(true);
-}
-
 static void handle_option(const char* s)
 {
   switch (s[1])
   {
     case 's': // print cycle count upon termination
-      current.t0 = 1;
+      current.cycle0 = 1;
       break;
 
-    case 'c': // print uarch counters upon termination
-      uarch_counters_enabled = 1;
+    case 'p': // disable demand paging
+      demand_paging = 0;
       break;
 
     default:
@@ -105,6 +69,20 @@ static void run_loaded_program(size_t argc, char** argv, uintptr_t kstack_top)
     memcpy((void*)stack_top, (void*)(uintptr_t)argv[i], len);
     argv[i] = (void*)stack_top;
   }
+
+  // copy envp to user stack
+  const char* envp[] = {
+    // environment goes here
+  };
+  size_t envc = sizeof(envp) / sizeof(envp[0]);
+  for (size_t i = 0; i < envc; i++) {
+    size_t len = strlen(envp[i]) + 1;
+    stack_top -= len;
+    memcpy((void*)stack_top, envp[i], len);
+    envp[i] = (void*)stack_top;
+  }
+
+  // align stack
   stack_top &= -sizeof(void*);
 
   struct {
@@ -129,14 +107,16 @@ static void run_loaded_program(size_t argc, char** argv, uintptr_t kstack_top)
 
   #define STACK_INIT(type) do { \
     unsigned naux = sizeof(aux)/sizeof(aux[0]); \
-    stack_top -= (1 + argc + 1 + 1 + 2*naux) * sizeof(type); \
+    stack_top -= (1 + argc + 1 + envc + 1 + 2*naux) * sizeof(type); \
     stack_top &= -16; \
     long sp = stack_top; \
     PUSH_ARG(type, argc); \
     for (unsigned i = 0; i < argc; i++) \
       PUSH_ARG(type, argv[i]); \
     PUSH_ARG(type, 0); /* argv[argc] = NULL */ \
-    PUSH_ARG(type, 0); /* envp[0] = NULL */ \
+    for (unsigned i = 0; i < envc; i++) \
+      PUSH_ARG(type, envp[i]); \
+    PUSH_ARG(type, 0); /* envp[envc] = NULL */ \
     for (unsigned i = 0; i < naux; i++) { \
       PUSH_ARG(type, aux[i].key); \
       PUSH_ARG(type, aux[i].value); \
@@ -145,10 +125,11 @@ static void run_loaded_program(size_t argc, char** argv, uintptr_t kstack_top)
 
   STACK_INIT(uintptr_t);
 
-  if (current.t0) // start timer if so requested
-    current.t0 = rdcycle();
-
-  start_uarch_counters();
+  if (current.cycle0) { // start timer if so requested
+    current.time0 = rdtime();
+    current.cycle0 = rdcycle();
+    current.instret0 = rdinstret();
+  }
 
   trapframe_t tf;
   init_tf(&tf, current.entry, stack_top);
@@ -173,18 +154,19 @@ static void rest_of_boot_loader(uintptr_t kstack_top)
   run_loaded_program(argc, args.argv, kstack_top);
 }
 
-void boot_loader()
+void boot_loader(uintptr_t dtb)
 {
   extern char trap_entry;
   write_csr(stvec, &trap_entry);
   write_csr(sscratch, 0);
   write_csr(sie, 0);
+  set_csr(sstatus, SSTATUS_SUM);
 
   file_init();
-  enter_supervisor_mode(rest_of_boot_loader, pk_vm_init());
+  enter_supervisor_mode(rest_of_boot_loader, pk_vm_init(), 0);
 }
 
-void boot_other_hart()
+void boot_other_hart(uintptr_t dtb)
 {
   // stall all harts besides hart 0
   while (1)

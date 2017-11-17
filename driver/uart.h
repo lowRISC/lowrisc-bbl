@@ -4,15 +4,8 @@
 #define UART_HEADER_H
 
 #include <stdint.h>
-#include "dev_map.h"
 
 // Xilinx AXI_UART 16550
-
-#ifdef DEV_MAP__io_ext_uart__BASE
-  #define UART_BASE ((uint32_t)(DEV_MAP__io_ext_uart__BASE | 0x1000))
-#else
-  #define UART_BASE 0
-#endif
 
 // RBR: Receiver buffer register [Read, LCR[7] == 0]
 #define UART_RBR 0x0u
@@ -51,7 +44,6 @@
 #define UART_DLM 0x1u
 
 // UART APIs
-extern void uart_init();
 extern void uart_send(uint8_t);
 extern void uart_send_string(const char *str);
 extern void uart_send_buf(const char *buf, const int32_t len);
@@ -60,5 +52,6 @@ extern uint8_t uart_read_irq();
 extern uint8_t uart_check_read_irq();
 extern void uart_enable_read_irq();
 extern void uart_disable_read_irq();
+extern void query_uart(uintptr_t fdt);
 
 #endif

@@ -15,9 +15,16 @@ typedef long (*syscall_t)(long, long, long, long, long, long, long);
 
 void sys_exit(int code)
 {
-  if (current.t0)
-    printk("%ld cycles\n", rdcycle() - current.t0);
-  dump_uarch_counters();
+  if (current.cycle0) {
+    size_t dt = rdtime() - current.time0;
+    size_t dc = rdcycle() - current.cycle0;
+    size_t di = rdinstret() - current.instret0;
+
+    printk("%ld ticks\n", dt);
+    printk("%ld cycles\n", dc);
+    printk("%ld instructions\n", di);
+    printk("%d.%d%d CPI\n", dc/di, 10ULL*dc/di % 10, (100ULL*dc + di/2)/di % 10);
+  }
   shutdown(code);
 }
 
@@ -313,8 +320,12 @@ int sys_getuid()
 
 uintptr_t sys_mmap(uintptr_t addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
-  uintptr_t ret =  do_mmap(addr, length, prot, flags, fd, offset);
-  return ret;
+#if __riscv_xlen == 32
+  if (offset != (offset << 12 >> 12))
+    return -ENXIO;
+  offset <<= 12;
+#endif
+  return do_mmap(addr, length, prot, flags, fd, offset);
 }
 
 int sys_munmap(uintptr_t addr, size_t length)
@@ -448,6 +459,8 @@ long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, unsigned l
     [SYS_getrlimit] = sys_stub_nosys,
     [SYS_setrlimit] = sys_stub_nosys,
     [SYS_chdir] = sys_chdir,
+    [SYS_set_tid_address] = sys_stub_nosys,
+    [SYS_set_robust_list] = sys_stub_nosys,
   };
 
   const static void* old_syscall_table[] = {

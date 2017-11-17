@@ -50,6 +50,8 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL([AR],[ar])
 AC_CHECK_TOOL([RANLIB],[ranlib])
+AC_CHECK_TOOL([READELF],[readelf])
+AC_CHECK_TOOL([OBJCOPY],[objcopy])
 
 #-------------------------------------------------------------------------
 # MCPPBS specific program checks
@@ -59,7 +61,6 @@ AC_CHECK_TOOL([RANLIB],[ranlib])
 # via the makefile.
 
 MCPPBS_PROG_INSTALL
-MCPPBS_PROG_RUN
 
 #-------------------------------------------------------------------------
 # Checks for header files
@@ -68,11 +69,40 @@ MCPPBS_PROG_RUN
 AC_HEADER_STDC
 
 #-------------------------------------------------------------------------
-# Default compiler flags
+# Register RISCV environment variable
 #-------------------------------------------------------------------------
 
-AC_SUBST([CFLAGS],  ["-Wall -Werror -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -fno-delete-null-pointer-checks"])
+AC_ARG_VAR(RISCV, [top-level RISC-V install directory])
+
+#-------------------------------------------------------------------------
+# Set compiler flags
+#-------------------------------------------------------------------------
+
+default_CFLAGS="-Wall -Werror -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -Wno-error=multichar -fno-delete-null-pointer-checks"
+
+AC_ARG_ENABLE([32bit],
+	AS_HELP_STRING([--enable-32bit], [Build a 32-bit pk]),
+	BUILD_32BIT=$enableval,
+	BUILD_32BIT=no)
+
+case "${BUILD_32BIT}" in
+  yes|default)
+	echo "Building 32-bit pk"
+	CFLAGS="$default_CFLAGS -m32"
+	LDFLAGS="-m32"
+	install_subdir="riscv32-unknown-elf"
+	;;
+  *)
+	CFLAGS="$default_CFLAGS"
+	LDFLAGS=
+	install_subdir="riscv64-unknown-elf"
+	;;
+esac
+
+AC_SUBST(CFLAGS)
+AC_SUBST(LDFLAGS)
 AC_SUBST([LIBS],  ["-lgcc"])
+AC_SUBST(install_subdir)
 
 #-------------------------------------------------------------------------
 # MCPPBS subproject list
