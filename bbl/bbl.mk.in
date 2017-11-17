@@ -16,8 +16,10 @@ bbl_asm_srcs = \
 
 payload.o: bbl_payload
 
-bbl_payload: $(BBL_PAYLOAD)
-	if $(READELF) -h $< 2> /dev/null > /dev/null; then $(OBJCOPY) -O binary $< $@; else cp $< $@; fi
+bbl_payload: $(bbl_payload)
+	riscv64-unknown-elf-objcopy -I elf64-littleriscv -O binary $< $@
+
+.PHONY: bbl_payload
 
 bbl_test_srcs =
 

@@ -85,7 +85,7 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 #  - CXXFLAGS : flags for C++ compiler (eg. -Wall,-g,-O3)
 
 CC            := @CC@
-CFLAGS        := @CFLAGS@ $(CFLAGS) -DBBL_PAYLOAD=\"$(bbl_payload)\" \
+CFLAGS        := @CFLAGS@ $(CFLAGS) -DBBL_PAYLOAD=\"bbl_payload\" \
 				 -I$(lowrisc_dir)/generated-src
 COMPILE       := $(CC) -MMD -MP $(CFLAGS) \
                  $(sprojs_include)
@@ -431,6 +431,7 @@ junk += $(project_name)-*.tar.gz
 
 all : $(install_hdrs) $(install_libs) $(install_exes)
 	riscv64-unknown-elf-objdump -d bbl >bbl.dis
+	riscv64-unknown-elf-objdump -d -j .payload bbl >payload.dis
 
 .PHONY : all
 
