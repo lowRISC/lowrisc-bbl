@@ -3,23 +3,15 @@ bbl_subproject_deps = \
   softfloat \
   driver \
   machine \
-  dummy_payload \
+  util
 
 bbl_hdrs = \
   bbl.h \
 
 bbl_c_srcs = \
-  logo.c \
+  logo.c dram.c random.c dhrystone.c dhrystone_main.c \
 
 bbl_asm_srcs = \
-  payload.S \
-
-payload.o: bbl_payload
-
-bbl_payload: $(bbl_payload)
-	riscv64-unknown-elf-objcopy -I elf64-littleriscv -O binary $< $@
-
-.PHONY: bbl_payload
 
 bbl_test_srcs =
 

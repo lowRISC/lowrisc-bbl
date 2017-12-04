@@ -5,55 +5,37 @@
 #include "bits.h"
 #include "config.h"
 #include "fdt.h"
+#include "uart.h"
 #include <string.h>
 
-static const void* entry_point;
+void dramtest(void);
+int dhry_main (void);
+int micropython_main(void);
 
-static uintptr_t dtb_output()
+double n = 355.;
+double d = 113.;
+
+void test(void)
 {
-  extern char _payload_end;
-  uintptr_t end = (uintptr_t) &_payload_end;
-  return (end + MEGAPAGE_SIZE - 1) / MEGAPAGE_SIZE * MEGAPAGE_SIZE;
-}
-
-#if 0
-static void filter_dtb(uintptr_t source)
-{
-  uintptr_t dest = dtb_output();
-  uint32_t size = fdt_size(source);
-  memcpy((void*)dest, (void*)source, size);
-
-  // Remove information from the chained FDT
-  filter_harts(dest, DISABLED_HART_MASK);
-  filter_plic(dest);
-  filter_compat(dest, "riscv,clint0");
-  filter_compat(dest, "riscv,debug-013");
-}
-#endif
-
-void boot_other_hart(uintptr_t dtb)
-{
-  const void* entry;
+  printm("pi = %f\r\n", n/d);
   do {
-    entry = entry_point;
-    mb();
-  } while (!entry);
-  printm("Entry point %p\n", entry);
-  enter_supervisor_mode(entry, read_csr(mhartid), dtb_output());
+    uart_send('>');
+    uint8_t ch = uart_recv();
+    printm("%c\n", ch);
+    switch(ch)
+      {
+      case 'd': dhry_main(); break;
+      case 'm': dramtest(); break;
+      case 'p': micropython_main(); break;
+      case 'x': poweroff(); break;
+      default : printm("%c: Unknown command\n", ch); break;
+      }
+  } while (1);
 }
 
 void boot_loader(uintptr_t dtb)
 {
-  extern char _payload_start;
-#if 0
-  filter_dtb(dtb);
-#else
-  printm("Skipping filter_dtb\n");
-#endif  
-#ifdef PK_ENABLE_LOGO
   print_logo();
-#endif
   mb();
-  entry_point = &_payload_start;
-  boot_other_hart(dtb);
+  test();
 }

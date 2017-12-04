@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "mtrap.h"
 #include "uart.h"
+#include "spi.h"
 
 volatile uint32_t *uart_base_ptr;
 
@@ -147,7 +148,12 @@ void query_uart(uintptr_t fdt)
       if (bram) printm("Block RAM start 0x%x\n", bram);
       if (ddr) printm("DDR memory start 0x%x\n", ddr);
       if (intc) printm("Interrupt controller start 0x%x\n", intc);
-      if (spi) printm("SPI controller start 0x%x\n", spi);
+      if (spi)
+	{
+	  extern volatile uint32_t *spi_base_ptr;
+	  printm("SPI controller start 0x%x\n", spi);
+	  spi_base_ptr = (void*)spi;
+	}
       if (unknown)
         printm("Unknown %s, start = 0x%x\n", unknownstr, unknown);
     }

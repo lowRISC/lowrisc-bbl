@@ -85,8 +85,7 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
 #  - CXXFLAGS : flags for C++ compiler (eg. -Wall,-g,-O3)
 
 CC            := @CC@
-CFLAGS        := @CFLAGS@ $(CFLAGS) -DBBL_PAYLOAD=\"bbl_payload\" \
-				 -I$(lowrisc_dir)/generated-src
+CFLAGS        := @CFLAGS@ $(CFLAGS) -march=rv64imafdc -mabi=lp64d
 COMPILE       := $(CC) -MMD -MP $(CFLAGS) \
                  $(sprojs_include)
 # Linker
@@ -167,7 +166,7 @@ define subproject_template
 # In some (rare) cases, a subproject might not have any actual object
 # files. It might only include header files or program sources. To keep
 # things consistent we still want a library for this subproject, so in
-# this spectial case we create a dummy source file and thus the build
+# this special case we create a dummy source file and thus the build
 # system will create a library for this subproject with just the
 # corresponding dummy object file.
 
@@ -261,7 +260,8 @@ $$($(2)_install_prog_objs) : %.o : %.c
 	$(COMPILE) -c $$<
 
 $$($(2)_install_prog_exes) : % : %.o $$($(2)_prog_libnames)
-	$(LINK) -o $$@ $$< $$($(2)_prog_libarg) $(LIBS) -T $(src_dir)/$(2)/$(2).lds
+	$(LINK) -o $$@  $$< /local/scratch/jrrk2/micropython/ports/uminimal/micropython.a $$($(2)_prog_libarg) $(LIBS) -T $(src_dir)/$(2)/$(2).lds
+	riscv64-unknown-elf-objdump -d $$@ > $$@.dis
 
 $(2)_c_deps += $$($(2)_install_prog_deps)
 $(2)_junk += \
@@ -430,8 +430,6 @@ junk += $(project_name)-*.tar.gz
 #-------------------------------------------------------------------------
 
 all : $(install_hdrs) $(install_libs) $(install_exes)
-	riscv64-unknown-elf-objdump -d bbl >bbl.dis
-	riscv64-unknown-elf-objdump -d -j .payload bbl >payload.dis
 
 .PHONY : all
 

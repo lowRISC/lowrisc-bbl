@@ -207,7 +207,8 @@ __redirect_trap:
   j restore_mscratch
 
 __trap_from_machine_mode:
-  jal trap_from_machine_mode
+  la s0, trap_from_machine_mode
+  jalr s0
   j restore_regs
 
 do_reset:
@@ -261,7 +262,7 @@ do_reset:
   li a4, (~DISABLED_HART_MASK & (DISABLED_HART_MASK+1))
   srl a4, a4, a3
   andi a4, a4, 1
-  bnez a4, init_first_hart
+  bnez a4, 2f
 
   # set MSIE bit to receive IPI
   li a2, MIP_MSIP
@@ -286,11 +287,17 @@ do_reset:
   # make sure our hart id is within a valid range
   fence
   li a2, MAX_HARTS
-  bltu a3, a2, init_other_hart
+  bltu a3, a2, 2f
 #endif
   wfi
   j .LmultiHart
-
+2:
+  la s0, init_first_hart
+  jalr s0	
+3:
+  la s0, init_other_hart
+  jalr s0	
+	
   .bss
   .align RISCV_PGSHIFT
 stacks:
