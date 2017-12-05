@@ -259,8 +259,8 @@ $(2)_install_prog_exes := $$(patsubst %.c, %, $$($(2)_install_prog_srcs))
 $$($(2)_install_prog_objs) : %.o : %.c
 	$(COMPILE) -c $$<
 
-$$($(2)_install_prog_exes) : % : %.o $$($(2)_prog_libnames)
-	$(LINK) -o $$@  $$< /local/scratch/jrrk2/micropython/ports/uminimal/micropython.a $$($(2)_prog_libarg) $(LIBS) -T $(src_dir)/$(2)/$(2).lds
+$$($(2)_install_prog_exes) : % : %.o $$($(2)_prog_libnames) ../../micropython/ports/uminimal/micropython.a
+	$(LINK) -o $$@  $$< ../../micropython/ports/uminimal/micropython.a $$($(2)_prog_libarg) $(LIBS) -T $(src_dir)/$(2)/$(2).lds
 	riscv64-unknown-elf-objdump -d $$@ > $$@.dis
 
 $(2)_c_deps += $$($(2)_install_prog_deps)

@@ -237,6 +237,8 @@ int dhry_main (void)
   debug_printf("        should be:   DHRYSTONE PROGRAM, 2'ND STRING\n");
   debug_printf("\n");
 
+  printm("User Time = %ld\n", User_Time);
+  printm("Number of Runs = %ld\n", Number_Of_Runs);
 
   Microseconds = ((User_Time / Number_Of_Runs) * Mic_secs_Per_Second) / HZ;
   Dhrystones_Per_Second = (HZ * Number_Of_Runs) / User_Time;

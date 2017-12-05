@@ -12,12 +12,9 @@ void dramtest(void);
 int dhry_main (void);
 int micropython_main(void);
 
-double n = 355.;
-double d = 113.;
-
 void test(void)
 {
-  printm("pi = %f\r\n", n/d);
+  printm("enter d for dhrystone test, m for dramtest, p for python shell, x to exit\r\n");
   do {
     uart_send('>');
     uint8_t ch = uart_recv();

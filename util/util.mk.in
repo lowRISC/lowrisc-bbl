@@ -9,3 +9,8 @@ stubs.c snprintf.c \
 #  string.c \
 
 util_asm_srcs = \
+
+../../micropython/ports/uminimal/micropython.a:
+	rm -rf ../../micropython/ports/uminimal/build
+	$(MAKE) -C ../../micropython/ports/uminimal CROSS_COMPILE=riscv64-unknown-elf-
+
