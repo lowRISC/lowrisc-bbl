@@ -86,6 +86,8 @@ SECTIONS
     *(COMMON)
   }
 
+  _end = .;
+
   .sbi :
   {
     *(.sbi)
@@ -96,5 +98,4 @@ SECTIONS
     *(.payload)
   }
 
-  _end = .;
 }

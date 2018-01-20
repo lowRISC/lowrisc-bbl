@@ -3,7 +3,7 @@
 #include "vm.h"
 #include "fp_emulation.h"
 #include "fdt.h"
-#include "uart.h"
+#include "hid.h"
 #include <string.h>
 #include <limits.h>
 
@@ -129,11 +129,14 @@ static void wake_harts()
 
 void init_first_hart(uintptr_t hartid, uintptr_t dtb)
 {
+  extern char _bss_start[], _end[];
+  size_t bsslen = _end - _bss_start;
+  memset(_bss_start, 0, bsslen);
   hart_init();
   hls_init(0); // this might get called again from parse_config_string
 
   // Confirm console as early as possible
-  query_uart(dtb);
+  query_hid(dtb);
 
 #if 0
   query_mem(dtb);
